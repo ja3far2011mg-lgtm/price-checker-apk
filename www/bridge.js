@@ -17,6 +17,8 @@
   }
 
   async function rpc(url, params) {
+    const envelope = { jsonrpc: '2.0', method: 'call', id: Date.now(), params };
+
     const hasNativeHttp = window.Capacitor &&
       window.Capacitor.Plugins &&
       window.Capacitor.Plugins.CapacitorHttp;
@@ -27,14 +29,14 @@
           url,
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-          data: params
+          data: envelope
         });
         const data = typeof res.data === 'string' ? JSON.parse(res.data) : res.data;
         if (data.error) {
           const msg = data.error.data?.message || JSON.stringify(data.error);
           throw new Error(msg);
         }
-        return data.result;
+        return data;
       } catch (e) {
         console.warn('[bridge.js] CapacitorHttp failed, falling back to fetch:', e.message);
       }
@@ -45,7 +47,7 @@
       headers: { 'Content-Type': 'application/json',
                  'Accept': 'application/json' },
       credentials: 'include',
-      body: JSON.stringify(params)
+      body: JSON.stringify(envelope)
     });
     if (!res.ok) throw new Error(res.status + ' ' + res.statusText);
     const data = await res.json();
@@ -53,7 +55,7 @@
       const msg = data.error.data?.message || JSON.stringify(data.error);
       throw new Error(msg);
     }
-    return data.result;
+    return data;
   }
 
   const _logBuffer = [];
