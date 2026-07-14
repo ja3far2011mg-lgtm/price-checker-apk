@@ -1,0 +1,11 @@
+{
+  "appId": "com.sghstationery.pricechecker",
+  "appName": "Price Checker",
+  "webDir": "www",
+  "android": {
+    "allowMixedContent": true
+  },
+  "server": {
+    "cleartext": true
+  }
+}

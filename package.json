@@ -1,0 +1,16 @@
+{
+  "name": "price-checker-android",
+  "version": "1.0.0",
+  "description": "Price Checker for Odoo 19 Online - Android build",
+  "private": true,
+  "scripts": {
+    "build": "echo 'Static files already in www/, nothing to compile'"
+  },
+  "dependencies": {
+    "@capacitor/android": "^6.1.2",
+    "@capacitor/core": "^6.1.2"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^6.1.2"
+  }
+}
