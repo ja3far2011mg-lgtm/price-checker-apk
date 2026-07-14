@@ -7,5 +7,10 @@
   },
   "server": {
     "cleartext": true
+  },
+  "plugins": {
+    "CapacitorHttp": {
+      "enabled": true
+    }
   }
 }
