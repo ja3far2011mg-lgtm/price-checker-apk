@@ -4,7 +4,6 @@
 (function () {
   'use strict';
 
-  // ── Persistent storage (localStorage works fine in Capacitor WebView) ──
   function saveState(data) {
     try { localStorage.setItem('priceCheckerState', JSON.stringify(data)); }
     catch (e) { console.warn('saveState failed', e); }
@@ -17,8 +16,30 @@
     } catch (e) { return null; }
   }
 
-  // ── HTTP RPC (direct fetch — Capacitor WebView allows cross-origin) ──
   async function rpc(url, params) {
+    const hasNativeHttp = window.Capacitor &&
+      window.Capacitor.Plugins &&
+      window.Capacitor.Plugins.CapacitorHttp;
+
+    if (hasNativeHttp) {
+      try {
+        const res = await window.Capacitor.Plugins.CapacitorHttp.request({
+          url,
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+          data: params
+        });
+        const data = typeof res.data === 'string' ? JSON.parse(res.data) : res.data;
+        if (data.error) {
+          const msg = data.error.data?.message || JSON.stringify(data.error);
+          throw new Error(msg);
+        }
+        return data.result;
+      } catch (e) {
+        console.warn('[bridge.js] CapacitorHttp failed, falling back to fetch:', e.message);
+      }
+    }
+
     const res = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json',
@@ -35,13 +56,24 @@
     return data.result;
   }
 
-  // ── Expose window.api matching the Electron preload interface ──
+  const _logBuffer = [];
+  function _log(msg) {
+    const line = new Date().toISOString() + ' — ' + msg;
+    _logBuffer.push(line);
+    if (_logBuffer.length > 300) _logBuffer.shift();
+    console.log('[PriceChecker]', msg);
+  }
+
   window.api = {
     rpc,
     saveState,
     loadState,
-    log(msg)    { console.log('[PriceChecker]', msg); },
-    openLog()   { alert('Logs are in the browser dev console on Android.'); },
+    log: _log,
+    openLog() {
+      alert(_logBuffer.length
+        ? _logBuffer.slice(-40).join('\n')
+        : 'No log entries yet.');
+    },
     async toggleFullscreen() { return { isFullscreen: true }; },
     async fetchProductImage(baseUrl, tmplId) {
       return baseUrl + '/web/image/product.template/' + tmplId + '/image_1920';
